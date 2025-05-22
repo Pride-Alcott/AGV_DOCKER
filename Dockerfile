@@ -1,10 +1,10 @@
-FROM ros:humble-perception
+FROM --platform=linux/arm64 ros:humble-perception
 
 # Environment
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV UDEV=on
-ENV PYTHONPATH=\$PYTHONPATH:/usr/local/lib/python3.10/dist-packages
+ENV PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.10/dist-packages
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -20,28 +20,29 @@ RUN apt-get update && apt-get install -y \
     ros-humble-mavros-msgs \
   && rm -rf /var/lib/apt/lists/*
 
-# Install GeographicLib datasets
+# Install GeographicLib datasets for MAVROS
 RUN wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh \
     && chmod +x install_geographiclib_datasets.sh \
     && ./install_geographiclib_datasets.sh \
     && rm install_geographiclib_datasets.sh
 
-# Python vision & serial
+# Install Python packages - YOLOv8s optimized for Pi
 RUN pip3 install --no-cache-dir \
     ultralytics \
     numpy \
     opencv-python \
     matplotlib \
-    torch torchvision torchaudio \
-    pyserial
+    pyserial \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    torch torchvision torchaudio
 
 # Create and populate workspace
 WORKDIR /AGV
 RUN mkdir -p src
 RUN git clone https://github.com/Pride-Alcott/Solar-farm-AGV.git src/Solar-farm-AGV
 
-# Build the ROS 2 workspace
-RUN bash -c "source /opt/ros/humble/setup.bash && cd /AGV && colcon build"
+# Build the ROS 2 workspace with limited parallelism for Pi
+RUN bash -c "source /opt/ros/humble/setup.bash && cd /AGV && colcon build --parallel-workers 2"
 
 # Auto-source ROS & workspace
 RUN echo 'source /opt/ros/humble/setup.bash' >> /root/.bashrc && \
