@@ -39,7 +39,7 @@ RUN pip3 install --no-cache-dir \
 # Create and populate workspace
 WORKDIR /AGV
 RUN mkdir -p src
-RUN git clone https://github.com/Pride-Alcott/AGV.git src/AGV
+RUN git clone https://github.com/Pride-Alcott/AGV.git
 
 # Build the ROS 2 workspace with limited parallelism for Pi
 RUN bash -c "source /opt/ros/humble/setup.bash && cd /AGV && colcon build --parallel-workers 2"
