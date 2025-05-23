@@ -5,6 +5,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV UDEV=on
 ENV PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.10/dist-packages
+ENV HOME=/AGV
+
+# Create AGV directory and set as home
+RUN mkdir -p /AGV
+WORKDIR /AGV
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -38,21 +43,21 @@ RUN pip3 install --no-cache-dir \
     --extra-index-url https://download.pytorch.org/whl/cpu \
     torch torchvision torchaudio
 
-# Create and populate workspace
-WORKDIR /AGV
+# Create src directory and clone repository
 RUN mkdir -p src
-RUN git clone https://github.com/Pride-Alcott/AGV.git
+RUN cd src && git clone https://github.com/Pride-Alcott/AGV.git
 
 # Build the ROS 2 workspace with limited parallelism for Pi
-RUN bash -c "source /opt/ros/humble/setup.bash && cd /AGV && colcon build --parallel-workers 2"
+RUN bash -c "source /opt/ros/humble/setup.bash && colcon build --parallel-workers 2"
 
-# Auto-source ROS & workspace
-RUN echo 'source /opt/ros/humble/setup.bash' >> /root/.bashrc && \
-    echo 'source /AGV/install/setup.bash' >> /root/.bashrc
+# Create .bashrc in /AGV and auto-source ROS & workspace
+RUN echo 'source /opt/ros/humble/setup.bash' > /AGV/.bashrc && \
+    echo 'source /AGV/install/setup.bash' >> /AGV/.bashrc
 
-# Entrypoint
+# Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Set entrypoint and default command
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash"]
