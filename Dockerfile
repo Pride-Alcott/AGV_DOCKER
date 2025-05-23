@@ -26,13 +26,15 @@ RUN wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/
     && ./install_geographiclib_datasets.sh \
     && rm install_geographiclib_datasets.sh
 
-# Install Python packages - YOLOv8s optimized for Pi
+# Install Python packages - YOLOv8s optimized for Pi + your requested packages
 RUN pip3 install --no-cache-dir \
     ultralytics \
-    numpy \
+    numpy==1.24.4 \
     opencv-python \
     matplotlib \
     pyserial \
+    pymavlink \
+    piexif \
     --extra-index-url https://download.pytorch.org/whl/cpu \
     torch torchvision torchaudio
 
